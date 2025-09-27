@@ -1,0 +1,53 @@
+# Core FastAPI dependencies
+fastapi==0.117.1
+uvicorn[standard]==0.37.0
+gunicorn==21.2.0
+
+# Pydantic for data validation
+pydantic==2.11.9
+pydantic-settings==2.11.0
+
+# HTTP client for Saby API
+httpx==0.28.1
+aiohttp==3.12.15
+
+# Environment variables
+python-dotenv==1.1.1
+
+# Logging
+structlog==25.4.0
+ы
+# JSON handling
+orjson==3.11.3
+
+# Date and time utilities
+python-dateutil==2.9.0.post0
+
+# Development dependencies
+pytest==8.4.2
+pytest-asyncio==1.2.0
+pytest-cov==7.0.0
+
+# Code quality
+black==23.12.0
+isort==6.0.1
+flake8==7.3.0
+mypy==1.18.2
+
+# Documentation
+mkdocs==1.6.1
+mkdocs-material==9.6.20
+
+# Monitoring and metrics
+prometheus-client==0.23.1
+
+# Security
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20
+
+# Database (if needed for caching)
+redis[hiredis]==6.4.0
+
+# Health checks
+healthcheck==1.10.1
