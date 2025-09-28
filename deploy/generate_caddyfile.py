@@ -12,19 +12,24 @@ def load_env_file(env_path: str = ".env") -> dict:
     """Load environment variables from .env file."""
     env_vars = {}
 
+    # First, load system environment variables
+    for key, value in os.environ.items():
+        env_vars[key] = value
+
+    # Then override with .env file if it exists
     if os.path.exists(env_path):
+        print(f"Loading environment from {env_path}")
         with open(env_path, 'r', encoding='utf-8') as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#') and '=' in line:
                     key, value = line.split('=', 1)
-                    env_vars[key.strip()] = value.strip().strip('"\'')
+                    key = key.strip()
+                    value = value.strip().strip('"\'')
+                    env_vars[key] = value
+                    print(f"  Loaded: {key}={value}")
     else:
-        print(f"Warning: {env_path} not found, using system environment variables")
-
-    # Merge with system environment variables
-    for key, value in os.environ.items():
-        env_vars[key] = value
+        print(f"Warning: {env_path} not found, using system environment variables only")
 
     return env_vars
 
@@ -39,6 +44,14 @@ def generate_caddyfile():
         'DOMAIN': 'sabby.ru',
         'CADDY_EMAIL': 'admin@sabby.ru',
     }
+
+    # Debug: show loaded variables
+    print("🔍 Loaded environment variables:")
+    for key in ['DOMAIN', 'CADDY_EMAIL']:
+        if key in env_vars:
+            print(f"  {key}={env_vars[key]}")
+        else:
+            print(f"  {key}=NOT FOUND")
 
     # Apply defaults for missing variables
     for key, default_value in defaults.items():
