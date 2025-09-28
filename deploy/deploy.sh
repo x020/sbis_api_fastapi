@@ -29,13 +29,6 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Проверка прав root
-check_root() {
-    if [[ $EUID -eq 0 ]]; then
-        log_error "Не запускайте скрипт от имени root!"
-        exit 1
-    fi
-}
 
 # Проверка зависимостей
 check_dependencies() {
@@ -248,7 +241,6 @@ main() {
     log_success "🚀 НАЧАЛО РАЗВЕРТЫВАНИЯ SBIS API FASTAPI"
     echo
 
-    check_root
     check_dependencies
     create_backup
 
