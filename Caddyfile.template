@@ -8,9 +8,6 @@
         level INFO
     }
 
-    # Storage path for certificates
-    tls_internal_certificates
-
     # HTTP to HTTPS redirect
     http_port 80
     https_port 443
@@ -46,22 +43,16 @@
 
     # Security headers
     header {
-        # Security headers
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
         X-XSS-Protection "1; mode=block"
         Referrer-Policy "strict-origin-when-cross-origin"
-
-        # Remove server header
         -Server
-
-        # API specific headers
         Access-Control-Allow-Origin "*"
         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
         Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
     }
-
 
     # Logging
     log {
@@ -83,12 +74,10 @@ api.{{DOMAIN}} {
         protocols tls1.2 tls1.3
     }
 
-    # Reverse proxy to FastAPI application
     reverse_proxy localhost:8000 {
         health_uri /api/v1/health
         health_interval 30s
         health_timeout 10s
-
         header_up Host {host}
         header_up X-Real-IP {remote}
         header_up X-Forwarded-For {remote}
@@ -96,7 +85,6 @@ api.{{DOMAIN}} {
         header_up X-Forwarded-Host {host}
     }
 
-    # Security headers
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         X-Content-Type-Options "nosniff"
@@ -106,8 +94,6 @@ api.{{DOMAIN}} {
         -Server
     }
 
-
-    # Logging
     log {
         output file /var/log/caddy/api.{{DOMAIN}}.log {
             roll_size 10mb
@@ -116,21 +102,17 @@ api.{{DOMAIN}} {
         format json
     }
 
-    # Gzip compression
     encode gzip
 }
 
 # Development subdomain (if needed)
 dev.{{DOMAIN}} {
-    # Enable automatic HTTPS
     tls internal
 
-    # Reverse proxy to FastAPI application
     reverse_proxy localhost:8000 {
         health_uri /api/v1/health
         health_interval 30s
         health_timeout 10s
-
         header_up Host {host}
         header_up X-Real-IP {remote}
         header_up X-Forwarded-For {remote}
@@ -138,7 +120,6 @@ dev.{{DOMAIN}} {
         header_up X-Forwarded-Host {host}
     }
 
-    # Less strict security for development
     header {
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
@@ -146,7 +127,6 @@ dev.{{DOMAIN}} {
         -Server
     }
 
-    # Logging
     log {
         output file /var/log/caddy/dev.{{DOMAIN}}.log {
             roll_size 10mb
@@ -155,7 +135,6 @@ dev.{{DOMAIN}} {
         format json
     }
 
-    # Gzip compression
     encode gzip
 }
 
