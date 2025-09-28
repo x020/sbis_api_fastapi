@@ -53,6 +53,54 @@ check_dependencies() {
     log_success "Все зависимости установлены"
 }
 
+# Проверка и создание директорий
+setup_directories() {
+    log_info "Настройка директорий..."
+
+    local directories=("logs" "backups")
+    for dir in "${directories[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            mkdir -p "$dir"
+            log_info "Создана директория: $dir"
+        fi
+    done
+
+    # Установка правильных прав
+    chmod 755 logs backups
+    log_success "Директории настроены"
+}
+
+# Проверка Docker образа
+validate_dockerfile() {
+    log_info "Проверка Dockerfile..."
+
+    if [[ ! -f "docker/Dockerfile" ]]; then
+        log_error "Dockerfile не найден"
+        exit 1
+    fi
+
+    # Проверка на использование non-root пользователя
+    if ! grep -q "USER appuser" docker/Dockerfile; then
+        log_warning "В Dockerfile не найден non-root пользователь"
+    fi
+
+    log_success "Dockerfile валиден"
+}
+
+# Проверка доступности портов
+check_ports() {
+    log_info "Проверка доступности портов..."
+
+    local ports=(8000 80 443)
+    for port in "${ports[@]}"; do
+        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            log_warning "Порт $port уже используется"
+        fi
+    done
+
+    log_success "Проверка портов завершена"
+}
+
 # Создание резервной копии
 create_backup() {
     local backup_name="backup_$(date +%Y%m%d_%H%M%S)"
@@ -183,17 +231,24 @@ start_services() {
 check_health() {
     log_info "Проверка здоровья сервисов..."
 
+    # Загрузка переменных окружения
+    if [[ -f ".env" ]]; then
+        source .env
+    fi
+
+    local domain="${DOMAIN:-localhost}"
     local max_attempts=30
     local attempt=1
 
     while [[ $attempt -le $max_attempts ]]; do
         log_info "Попытка $attempt/$max_attempts..."
 
-        if curl -f -s "http://localhost/api/v1/health" > /dev/null 2>&1; then
+        # Проверка API
+        if curl -f -s "http://localhost:8000/api/v1/health" > /dev/null 2>&1; then
             log_success "API сервис здоров"
 
-            # Проверка Caddy
-            if curl -f -s -k "https://localhost/api/v1/health" > /dev/null 2>&1; then
+            # Проверка Caddy (HTTPS)
+            if curl -f -s -k "https://$domain/api/v1/health" > /dev/null 2>&1; then
                 log_success "Caddy работает корректно"
                 return 0
             fi
@@ -211,14 +266,20 @@ check_health() {
 show_status() {
     log_info "Статус развертывания:"
 
+    # Загрузка переменных окружения
+    if [[ -f ".env" ]]; then
+        source .env
+    fi
+    local domain="${DOMAIN:-sabby.ru}"
+
     echo
     log_success "=== СТАТУС СЕРВИСОВ ==="
     docker-compose ps
 
     echo
     log_success "=== ИНФОРМАЦИЯ О СЕРВИСЕ ==="
-    echo "🌐 API Документация: https://sabby.ru/docs"
-    echo "🔍 Health Check: https://sabby.ru/api/v1/health"
+    echo "🌐 API Документация: https://$domain/docs"
+    echo "🔍 Health Check: https://$domain/api/v1/health"
     echo "📊 Метрики: http://localhost:9090 (если настроен Prometheus)"
     echo "📈 Grafana: http://localhost:3000 (если настроена)"
 
@@ -242,6 +303,9 @@ main() {
     echo
 
     check_dependencies
+    validate_dockerfile
+    setup_directories
+    check_ports
     create_backup
 
     local code_updated=false
@@ -264,15 +328,22 @@ main() {
     echo
     log_success "✅ РАЗВЕРТЫВАНИЕ ЗАВЕРШЕНО УСПЕШНО!"
     echo
-    log_info "API доступен по адресу: https://sabby.ru"
-    log_info "Документация: https://sabby.ru/docs"
+
+    # Загрузка DOMAIN для вывода
+    if [[ -f ".env" ]]; then
+        source .env
+    fi
+    local domain="${DOMAIN:-sabby.ru}"
+
+    log_info "API доступен по адресу: https://$domain"
+    log_info "Документация: https://$domain/docs"
 }
 
 # Обработка аргументов командной строки
 case "${1:-}" in
     "update")
         log_info "Режим обновления..."
-        update_code && setup_configuration && build_images && start_services
+        update_code && generate_caddyfile && setup_configuration && build_images && start_services
         ;;
     "restart")
         log_info "Перезапуск сервисов..."
@@ -286,6 +357,10 @@ case "${1:-}" in
         ;;
     "backup")
         create_backup
+        ;;
+    "validate")
+        log_info "Валидация конфигурации..."
+        validate_dockerfile && setup_directories && generate_caddyfile && setup_configuration
         ;;
     *)
         main

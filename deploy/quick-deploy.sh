@@ -8,6 +8,10 @@ set -e
 echo "🚀 SBIS API FastAPI - Quick Deploy"
 echo "=================================="
 
+# Generate Caddyfile from template
+echo "📄 Generating Caddyfile..."
+python3 deploy/generate_caddyfile.py
+
 # Check if .env exists
 if [[ ! -f ".env" ]]; then
     echo "❌ .env file not found!"
@@ -48,8 +52,18 @@ sleep 30
 
 # Check health
 echo "🏥 Checking health..."
-if curl -f -s "http://localhost/api/v1/health" > /dev/null; then
+
+# Load domain from .env
+if [[ -f ".env" ]]; then
+    source .env
+fi
+domain="${DOMAIN:-localhost}"
+
+if curl -f -s "http://localhost:8000/api/v1/health" > /dev/null; then
     echo "✅ API is healthy!"
+    if curl -f -s -k "https://$domain/api/v1/health" > /dev/null; then
+        echo "✅ Caddy is working!"
+    fi
 else
     echo "❌ API health check failed"
     echo "📊 Check logs:"
@@ -61,9 +75,9 @@ fi
 echo ""
 echo "🎉 Deployment successful!"
 echo "========================="
-echo "🌐 API URL: https://sabby.ru"
-echo "📚 Documentation: https://sabby.ru/docs"
-echo "🏥 Health Check: https://sabby.ru/api/v1/health"
+echo "🌐 API URL: https://$domain"
+echo "📚 Documentation: https://$domain/docs"
+echo "🏥 Health Check: https://$domain/api/v1/health"
 echo ""
 echo "📊 Monitoring:"
 echo "   Prometheus: http://localhost:9090"
