@@ -233,7 +233,13 @@ check_health() {
 
     # Загрузка переменных окружения
     if [[ -f ".env" ]]; then
-        source .env
+        # Используем sed для безопасной загрузки переменных
+        while IFS='=' read -r key value; do
+            # Пропускаем пустые строки и комментарии
+            [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+            # Устанавливаем переменную окружения
+            export "$key"="${value//\"/}"
+        done < .env
     fi
 
     local domain="${DOMAIN:-localhost}"
@@ -267,10 +273,11 @@ show_status() {
     log_info "Статус развертывания:"
 
     # Загрузка переменных окружения
+    local domain="sabby.ru"
     if [[ -f ".env" ]]; then
-        source .env
+        # Используем sed для безопасной загрузки переменных
+        domain=$(grep "^DOMAIN=" .env | cut -d'=' -f2- | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
     fi
-    local domain="${DOMAIN:-sabby.ru}"
 
     echo
     log_success "=== СТАТУС СЕРВИСОВ ==="
@@ -330,10 +337,10 @@ main() {
     echo
 
     # Загрузка DOMAIN для вывода
+    local domain="sabby.ru"
     if [[ -f ".env" ]]; then
-        source .env
+        domain=$(grep "^DOMAIN=" .env | cut -d'=' -f2- | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
     fi
-    local domain="${DOMAIN:-sabby.ru}"
 
     log_info "API доступен по адресу: https://$domain"
     log_info "Документация: https://$domain/docs"
