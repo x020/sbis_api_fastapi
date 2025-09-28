@@ -40,7 +40,7 @@ echo "✅ Configuration looks good!"
 
 # Generate Caddyfile from template
 echo "📄 Generating Caddyfile..."
-python3 deploy/generate_caddyfile.py
+python3 deploy/simple_generate.py
 
 # Build and start services
 echo "🏗️ Building and starting services..."

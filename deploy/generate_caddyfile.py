@@ -76,12 +76,25 @@ def generate_caddyfile():
     # Replace variables in template
     try:
         caddyfile_content = Template(template_content).safe_substitute(env_vars)
+        print(f"✅ Template variables replaced successfully")
     except KeyError as e:
+        print(f"❌ Missing required variable in template: {e}")
+        print(f"Available variables: {list(env_vars.keys())}")
         raise ValueError(f"Missing required variable in template: {e}")
 
     # Validate generated content
-    if '{{' in caddyfile_content or '}}' in caddyfile_content:
+    remaining_vars = []
+    for line in caddyfile_content.split('\n'):
+        if '{{' in line and '}}' in line:
+            remaining_vars.append(line.strip())
+
+    if remaining_vars:
+        print(f"❌ Some template variables were not replaced:")
+        for var in remaining_vars:
+            print(f"  {var}")
         raise ValueError("Some template variables were not replaced")
+    else:
+        print(f"✅ All template variables replaced successfully")
 
     # Write Caddyfile
     with open("Caddyfile", 'w', encoding='utf-8') as f:

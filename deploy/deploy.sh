@@ -119,8 +119,8 @@ create_backup() {
 generate_caddyfile() {
     log_info "Генерация Caddyfile из шаблона..."
 
-    if [[ -f "deploy/generate_caddyfile.py" ]]; then
-        python3 deploy/generate_caddyfile.py
+    if [[ -f "deploy/simple_generate.py" ]]; then
+        python3 deploy/simple_generate.py
         log_success "Caddyfile сгенерирован"
     else
         log_warning "Скрипт генерации Caddyfile не найден"
