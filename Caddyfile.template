@@ -44,14 +44,6 @@
         Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
     }
 
-    # Rate limiting
-    rate_limit {
-        zone static {
-            key {remote}
-            window 1m
-            events 60
-        }
-    }
 
     # Logging
     log {
@@ -96,14 +88,6 @@ api.{{DOMAIN}} {
         -Server
     }
 
-    # Rate limiting (stricter for API)
-    rate_limit {
-        zone api {
-            key {remote}
-            window 1m
-            events 120
-        }
-    }
 
     # Logging
     log {
